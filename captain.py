@@ -70,7 +70,7 @@ import xraydb
 np.random.seed(0)
 random.seed(0)
 
-def generate_beam(maxsize, avgsize, alpha=0.0, intensity=1.0):
+def generate_beam(maxsize, avgsize, alpha=0.0):
     """
     Generate a beam profile for coded aperture (tukey function).
     
@@ -86,7 +86,7 @@ def generate_beam(maxsize, avgsize, alpha=0.0, intensity=1.0):
     _sig = np.zeros(maxsize, dtype='float32')
     first = int((maxsize - 1) * 0.5 - avgsize * 0.5)
     beam = signal.windows.tukey(int(avgsize), alpha=alpha)
-    beam = beam * (intensity / np.max(beam))  # Scale to desired intensity
+    beam = beam / np.sum(beam)  # Scale to desired intensity
     _sig[first:first+int(avgsize)] = beam
     return _sig
 
@@ -192,7 +192,7 @@ def generate_data_sequence(aperture, positions, beam):
     return [generate_data(get_aperture_subset(aperture, pos, len(beam)), beam) 
             for pos in positions]
 
-def generate_kernel_matrix(positions, aperture, beam_length, intensities=None):
+def generate_kernel_matrix(positions, aperture, beam_length, exposures=None, intensity=1.0):
     """
     Generate kernel matrix from aperture positions and intensities.
     
@@ -207,17 +207,17 @@ def generate_kernel_matrix(positions, aperture, beam_length, intensities=None):
         ndarray: Kernel matrix where each row represents aperture at different position,
                 scaled by corresponding intensity
     """
-    if intensities is None:
-        intensities = np.ones(len(positions))
+    if exposures is None:
+        exposures = np.ones(len(positions))
     
     # Generate base kernel matrix
     kernel_matrix = np.zeros((len(positions), beam_length))
     for i, pos in enumerate(positions):
         kernel_matrix[i] = get_aperture_subset(aperture, pos, beam_length)
         # Multiply each row by its corresponding intensity
-        kernel_matrix[i] *= intensities[i]
+        kernel_matrix[i] *= exposures[i]
     
-    return kernel_matrix
+    return kernel_matrix * intensity
 
 def reconstruct_beam(kernel_matrix, measurements, alpha=0.0):
     """

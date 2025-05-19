@@ -7,7 +7,7 @@ import numpy as np
 ########################################################
 trials = 100 # Number of trials for confidence interval
 positions = np.arange(0, 200, 1) # Number of aperturepositions
-intensity = 100 # Intensity of the beam
+intensity = 1000 # Intensity of the beam
 exposures = np.random.uniform(low=1, high=1, size=len(positions)) # Exposure scale for each position
 
 ########################################################
@@ -16,13 +16,12 @@ exposures = np.random.uniform(low=1, high=1, size=len(positions)) # Exposure sca
 beam = captain.generate_beam(
     maxsize=100, # length of the beam
     avgsize=20, # average size of the beam
-    alpha=0.6, # shape parameter of the beam
-    intensity=intensity # intensity of the beam
+    alpha=0.5, # shape parameter of the beam
 ) 
 sequence = captain.generate_sequence(
     length=256, # length of the sequence
-    bits_for_zero=10, # number of bits for 0
-    bits_for_one=10 # number of bits for 1
+    bits_for_zero=10, # number of bits for 0 [mu]
+    bits_for_one=10 # number of bits for 1 [mu]
 )
 aperture = captain.generate_physical_aperture(
     sequence=sequence,
@@ -34,7 +33,7 @@ aperture = captain.generate_physical_aperture(
 ########################################################
 # Generate kernel matrix and measurements
 ########################################################
-kernel_matrix = captain.generate_kernel_matrix(positions, aperture, len(beam), exposures)
+kernel_matrix = captain.generate_kernel_matrix(positions, aperture, len(beam), exposures, intensity)
 noisefree_measurements = np.dot(kernel_matrix, beam)
 
 ########################################################
